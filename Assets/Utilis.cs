@@ -21,7 +21,6 @@ namespace SDAA{
             Vector2 leftCorner = (Vector2)pathfinder.transform.position + offset;
             int col = (int)((worldPosition - leftCorner).x/ss);
             int line = -(int)((worldPosition - leftCorner).y/ss);
-            Utilis.Log("line : " + line + ", col : " + col);
             if(col<0){
                 col = 0;
             }

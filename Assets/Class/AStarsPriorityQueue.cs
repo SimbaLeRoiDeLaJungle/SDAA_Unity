@@ -96,7 +96,6 @@ namespace SDAA{
         /// Update a node in the queue. return true if update is done, and false if the Node is not found. /!\ can be slow if the array is big.
         /// </summary>
         unsafe public bool Update(ref Node node){
-            DebugGetContentInLog("update content beggin :");
             for(int i = 0 ; i < _count ; i++){
                 if((*_elements[i]) == node){
                     int parent = (i-1)>>1;
@@ -113,11 +112,9 @@ namespace SDAA{
                     else if(rightChild<_count && (_elements[i]->f - _elements[rightChild]->f) < 0 ){
                         BubbleDown(i);
                     }
-                    DebugGetContentInLog("update content end :");
                     return true;
                 }
             }
-            Utilis.Log("Update -> false");
             return false;
         }
 
@@ -158,15 +155,12 @@ namespace SDAA{
         /// Rezize stuff
         /// </summary>
         unsafe private void ResizeItemStore(int newSize){
-            Debug.Log("Resize : entry");
-            Debug.Log("newSize : " + newSize);
             if(_count < newSize || DEFAULT_CAPACITY <= newSize){
                 return;
             }
             Node*[] temp = new Node*[newSize];
             System.Array.Copy(_elements,0,temp,0,_count);
             _elements = temp;
-            Debug.Log("Resize : " + _elements.Length);
         }
 
         /*--#--#--#--#--#--#--#--#--#--#--#--#--#--#--#--#--#--#--*/
@@ -227,7 +221,7 @@ namespace SDAA{
                 result += "\n - " + "( " + n->line + " , " + n->col + " )" ;
             }
             result += "\n------------------------";
-            Utilis.Log(result);
+            Utilitary.Log(result);
 
         }
 

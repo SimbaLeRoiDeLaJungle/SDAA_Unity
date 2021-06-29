@@ -1,38 +1,24 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 namespace SDAA{
-    public class Pathfinder : MonoBehaviour
+    /// <summary>
+    /// The main Class, use for calculate paths.
+    /// </summary>
+    public static class Pathfinder
     {
-        [SerializeField] private int width;
-        [SerializeField] private int height;
-        [SerializeField] private float squareSize;
-        public int Width {get{return width;}}
-        public int Height {get{return height;}}
-        public float SquareSize {get{return squareSize;}}
-        private static Pathfinder instance;
-        private bool[,] walkables;
-        
-        void Start(){
-
-            walkables = new bool[height+1,width+1];
-            for(int line = 0 ; line <= height ; line++){
-                for(int col = 0; col <= width ; col++){
-                    walkables[line,col] = true;
-                }
-            }
-        }
-
-        void Awake(){
-            if(instance == null){
-                instance = this;
-            }
-            else{
-                // throw error
-            }
-        }
-        public Path Pathfinding(GridPosition start,GridPosition dest){
+        public static Metric metric{get;set;}
+        private static int pathCount; // just for debug
+        /*--#--#--#--#--#--#--#--#--#--#--#--#--#--#--#--#--#--#--*/
+        public static Path Pathfinding(GridPosition start,GridPosition dest){
+            DateTime time = DateTime.Now;
+            TimeSpan interval;
             /*----------------- initializer ----------------------*/
+            int height = metric.Height;
+            int width = metric.Width;
+            float squareSize = metric.SquareSize;
+
             Node[,] nodes = new Node[height+1,width+1];
             bool[,] inOpen = new bool[height+1,width+1];
             bool[,] inClose = new bool[height+1,width+1];
@@ -48,6 +34,8 @@ namespace SDAA{
             nodes[start.line,start.col].h = CalculH(nodes[start.line,start.col],dest);
             nodes[start.line,start.col].f = nodes[start.line,start.col].h;
             if(dest.col == start.col && start.line == dest.line){
+                interval = DateTime.Now - time;
+                Utilitary.Log("----Pathfinding Duration----\nTime : " + interval.TotalSeconds + "\n------------------------------\n");
                 return new Path();
             }
 
@@ -56,12 +44,12 @@ namespace SDAA{
             GridPosition currentPos = start;
             while(h!= 0){
 
-                List<GridPosition> nearNodesPos = GetNearNodes(currentPos);
+                List<GridPosition> nearNodesPos = metric.GetNearNodes(currentPos);
                 // calculation of g,h & f cost  
                 for(int i = 0 ; i< nearNodesPos.Count ; i++){
                     int line = nearNodesPos[i].line;
                     int col = nearNodesPos[i].col;
-                    if(!inOpen[line,col] && !inClose[line,col] && walkables[line,col]){
+                    if(!inOpen[line,col] && !inClose[line,col] && metric.Walkables(line,col)){
                         // some calcul and Enqueue in the open set
                         nodes[line,col].parentLine = nodes[currentPos.line,currentPos.col].line;
                         nodes[line,col].parentCol = nodes[currentPos.line,currentPos.col].col;
@@ -73,8 +61,8 @@ namespace SDAA{
                         openList.Enqueue(ref nodes[line,col]);
                     }
                     else if(inOpen[line,col])
-                    {
-                        // some calcul and Update the open set
+                    {   
+                        // some calcul and Update the open set (is that realy usefull ?)
                         int parentLine = nodes[currentPos.line,currentPos.col].parentLine;
                         int parentCol = nodes[currentPos.line,currentPos.col].parentCol;
                         if((parentCol != -1) && (parentLine != -1)){
@@ -87,7 +75,6 @@ namespace SDAA{
                                 if(CGWOP < nodes[line,col].g){
                                     nodes[line,col].g = CGWOP;
                                     nodes[line,col].f = nodes[line,col].g + nodes[line,col].h;
-                                    Utilis.Log("pass");
                                     openList.Update(ref nodes[line,col]);
                                 }
                             }
@@ -96,6 +83,8 @@ namespace SDAA{
                 }
 
                 if(openList.Empty()){
+                    interval = DateTime.Now - time;
+                    Utilitary.Log("----Pathfinding Duration----\nTime : " + interval.TotalSeconds + "\n------------------------------\n");
                     return new Path();
                 }
 
@@ -119,17 +108,20 @@ namespace SDAA{
 
                 way.Push(currentPos);
             }
-
-            return new Path(way);
+            interval = DateTime.Now - time;
+            Utilitary.Log("----Pathfinding Duration----\nTime : " + interval.TotalSeconds + "\n------------------------------\n");
+            return new Path(new List<GridPosition>(way.ToArray()));
 
         }
 
+        /*--#--#--#--#--#--#--#--#--#--#--#--#--#--#--#--#--#--#--*/
         public static int CalculH(Node node , GridPosition dest){
             int X = Mathf.Abs(node.col-dest.col);
             int Y = Mathf.Abs(node.line-dest.line);
             return X+Y;
         }
 
+        /*--#--#--#--#--#--#--#--#--#--#--#--#--#--#--#--#--#--#--*/
         public static int CalculG(Node node,int parentG){
             int tempG;
             if(node.parentLine == -1){
@@ -140,69 +132,9 @@ namespace SDAA{
             return tempG;
         }
 
-        public List<GridPosition> GetNearNodes(GridPosition pos){
-            List<GridPosition> ns = new List<GridPosition>();
-            if(pos.line-1>=0){
-                ns.Add(new GridPosition(pos.line - 1, pos.col));
-            }
-            if(pos.line+1 < height){
-                ns.Add(new GridPosition(pos.line + 1, pos.col));
-            }
-            if(pos.col -1 >= 0){
-                ns.Add(new GridPosition(pos.line, pos.col - 1));
-            }
-            if(pos.col + 1 < width){
-                ns.Add(new GridPosition(pos.line, pos.col + 1));
-            }
-                        
-            return ns;
+        public static void AddMetric(Metric m){
+            metric = m;
         }
 
-
-
-        public static Vector2 MetricToWorldPoint(GridPosition gridPosition){
-            return Utilis.MetricToWorldPoint(instance,gridPosition);
-        }
-
-
-        public static GridPosition WorldToMetricPoint(Vector2 worldPosition){
-            return Utilis.WorldToMetricPoint(instance, worldPosition);
-        }
-
-        void OnDrawGizmos(){
-            if(squareSize==0){
-                return;
-            }
-            Gizmos.color = Color.blue;
-            for(int line = 0; line <= height; line++){
-                Vector2 begin = Utilis.MetricToWorldPoint(this, new GridPosition(line,0) );
-                Vector2 end = Utilis.MetricToWorldPoint(this, new GridPosition(line,width) );
-                Gizmos.DrawLine(begin,end);
-                for(int col = 0; col <= width; col++){
-                    if(walkables == null){
-                        break;
-                    }
-                    if(!walkables[line,col]){
-                        float ss = Pathfinder.Instance.SquareSize;
-                        Vector2 center = Pathfinder.MetricToWorldPoint(new GridPosition(line,col))+ new Vector2(ss,-ss)*0.5f;
-                        Gizmos.DrawCube(center, new Vector3(squareSize,squareSize,0));
-                    }
-                }
-            }
-            for(int col = 0; col <= width; col++){
-                Vector2 begin = Utilis.MetricToWorldPoint(this, new GridPosition(0,col) );
-                Vector2 end = Utilis.MetricToWorldPoint(this, new GridPosition(height,col) );
-                Gizmos.DrawLine(begin,end);
-            }
-
-
-            
-        }
-
-        public static Pathfinder Instance{get{return instance;}}
-
-        public static void SetWalkable(GridPosition gp, bool walkable ){
-            instance.walkables[gp.line,gp.col] = walkable;
-        }
     }
 }

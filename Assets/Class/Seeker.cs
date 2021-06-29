@@ -1,16 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 namespace SDAA{
     public class Seeker: MonoBehaviour
     {
-        public Path path;
+        public Path _path;
         public int id;
         private bool isReady=false;
-
-        void Start(){
-            path = new Path();
-        }
+        public delegate void OnPathSet(Path path);
+        private OnPathSet ops;
 
         void Update(){
             if(PathManager.IsReady() && !isReady){
@@ -19,9 +18,8 @@ namespace SDAA{
             }
 
         }
-
-        public void SetPath(Path path){
-            this.path = path;
+        public void SetOPS(OnPathSet _ops){
+            ops = new OnPathSet(_ops);
         }
 
         public void StartPath(GridPosition start, GridPosition dest){
@@ -33,19 +31,10 @@ namespace SDAA{
             return isReady;
         }
 
-        void OnDrawGizmosSelected(){
-            if(!IsReady() || path.way == null){
-                return;
+        public void SetPath(Path receivePath){
+            if(ops != null){
+                ops(receivePath);
             }
-            Gizmos.color = new Color(255,0,0,100);
-
-            foreach(GridPosition gp in path.way){
-                float ss = Pathfinder.Instance.SquareSize;
-                Debug.Log("line : " + gp.line + " col : " + gp.col);
-                Vector2 centerSquare = Pathfinder.MetricToWorldPoint(gp)+ new Vector2(ss,-ss)*0.5f; 
-                Gizmos.DrawCube(centerSquare,new Vector3(ss,ss,1));
-            }
-            
         }
 
     }

@@ -3,11 +3,15 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Threading;
 namespace SDAA{
+    /// <summary>
+    /// The implementation of the threading systeme (ThreadPool)
+    /// </summary>
     public class PathManager : MonoBehaviour
     {
 
         private static PathManager instance;
         private static List<Seeker> seekers;
+        private static List<int> cmp;
         private static int seekerId=0;
         
         void Start(){
@@ -18,6 +22,7 @@ namespace SDAA{
             if(instance == null){
                 instance = this;
                 seekers = new List<Seeker>();
+                cmp = new List<int>();
             }
             else{
                 // throw error
@@ -25,15 +30,18 @@ namespace SDAA{
         }
 
         public static void AddToQueue(PathRequest request){
-            ThreadPool.QueueUserWorkItem(state => MakePath(request));
+            ThreadPool.QueueUserWorkItem(new WaitCallback(MakePath),request);
         }
 
         private static void MakePath(object request){
             PathRequest req = (PathRequest)request;
-            Path path = Pathfinder.Instance.Pathfinding(req.start,req.dest);
             int index = IdToIndex(req.id);
-            if(index != -1){
-                seekers[index].SetPath(path);
+            if(cmp[index]>30){
+                Path path = Pathfinder.Pathfinding(req.start,req.dest);
+                if(index != -1){
+                    seekers[index].SetPath(path);
+                }
+                cmp[req.id] = 0;
             }
         }
 
@@ -49,10 +57,18 @@ namespace SDAA{
         public static void AddSeeker(Seeker seeker){
             seeker.id = seekerId;
             seekers.Add(seeker);
+            cmp.Add(0);
             seekerId++;
         }
         public static bool IsReady(){
             return instance != null;
+        }
+
+        void Update(){
+            for(int i = 0; i <cmp.Count; i++){
+                cmp[i]++;
+            }
+
         }
     }
 }

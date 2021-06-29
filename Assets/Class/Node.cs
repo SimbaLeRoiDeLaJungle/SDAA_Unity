@@ -2,6 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 namespace SDAA{
+    /// <summary>
+    /// Node for the Astars Pathfinding
+    /// </summary>
     public struct Node
     {
         // position
@@ -9,10 +12,12 @@ namespace SDAA{
         public int line;
         public int parentLine;
         public int parentCol;
-
+        public bool inOpen;
+        public bool inClose;
         public int h;
         public int g;
         public int f;
+        /*--#--#--#--#--#--#--#--#--#--#--#--#--#--#--#--#--#--#--*/
 
         public Node(int line, int col){
             this.col = col;
@@ -22,11 +27,13 @@ namespace SDAA{
             f = int.MaxValue;
             parentLine = -1;
             parentCol = -1;
+            inOpen = false;
+            inClose = false;
         }
 
-        /*-----------------------------------------------------------------*/
-        /*------------------------- OVERRIDE == ---------------------------*/
-        /*-----------------------------------------------------------------*/
+        /*--#--#--#--#--#--#--#--#--#--#--#--#--#--#--#--#--#--#--*/
+        /*---------------------- OVERRIDE == ---------------------*/
+        /*--#--#--#--#--#--#--#--#--#--#--#--#--#--#--#--#--#--#--*/
         public bool Equals(Node other)
         {
             return (line == other.line) && (col == other.col);   
